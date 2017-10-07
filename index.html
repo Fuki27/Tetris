@@ -74,13 +74,13 @@
     var KEY     = { ESC: 27, SPACE: 32, LEFT: 37, UP: 38, RIGHT: 39, DOWN: 40 },
         DIR     = { UP: 0, RIGHT: 1, DOWN: 2, LEFT: 3, MIN: 0, MAX: 3 },
         stats   = new Stats(),
-        canvas  = document.getElementById('canvas'),
-        ctx     = canvas.getContext('2d'),
-        ucanvas = document.getElementById('upcoming'),
-        uctx    = ucanvas.getContext('2d'),
+        canvasElement  = document.getElementById('canvas'),
+        canvasContext     = canvasElement.getContext('2d'),
+        upcomintCanvasElement = document.getElementById('upcoming'),
+        upcomingCanvasContext    = upcomintCanvasElement.getContext('2d'),
         speed   = { start: 0.6, decrement: 0.005, min: 0.1 }, // how long before piece drops by 1 row (seconds)
-        nx      = 10, // width of tetris court (in blocks)
-        ny      = 20, // height of tetris court (in blocks)
+        tetrisCourtWidth      	= 10, // width of tetris court (in blocks)
+        tetrisCourtHeight      	= 20, // height of tetris court (in blocks)
         nu      = 5;  // width/height of upcoming preview (in blocks)
 
     //-------------------------------------------------------------------------
@@ -88,7 +88,7 @@
     //-------------------------------------------------------------------------
 
     var dx, dy,        // pixel size of a single tetris block
-        blocks,        // 2 dimensional array (nx*ny) representing tetris court - either empty block or occupied by a 'piece'
+        blocks,        // 2 dimensional array (tetrisCourtWidth*tetrisCourtHeight) representing tetris court - either empty block or occupied by a 'piece'
         actions,       // queue of user actions (inputs)
         playing,       // true|false - game is in progress
         dt,            // time since starting this game
@@ -152,7 +152,7 @@
       var result = false
       eachblock(type, x, y, dir, function(x, y)
 	  {
-        if ((x < 0) || (x >= nx) || (y < 0) || (y >= ny) || getBlock(x,y))
+        if ((x < 0) || (x >= tetrisCourtWidth) || (y < 0) || (y >= tetrisCourtHeight) || getBlock(x,y))
 		{
 			result = true;
 		}       
@@ -178,7 +178,7 @@
 	  }
         
       var type = pieces.splice(random(0, pieces.length-1), 1)[0];
-      return { type: type, dir: DIR.UP, x: Math.round(random(0, nx - type.size)), y: 0 };
+      return { type: type, dir: DIR.UP, x: Math.round(random(0, tetrisCourtWidth - type.size)), y: 0 };
     }
 
 
@@ -200,7 +200,7 @@
         draw();
         stats.update();
         last = now;
-        requestAnimationFrame(frame, canvas);
+        requestAnimationFrame(frame, canvasElement);
       }
 
       resize(); 
@@ -223,12 +223,12 @@
 
     function resize(event)
 	{
-      canvas.width   = canvas.clientWidth;  // set canvas logical size equal to its physical size
-      canvas.height  = canvas.clientHeight; // (ditto)
-      ucanvas.width  = ucanvas.clientWidth;
-      ucanvas.height = ucanvas.clientHeight;
-      dx = canvas.width  / nx; // pixel size of a single tetris block
-      dy = canvas.height / ny; // (ditto)
+      canvasElement.width   = canvasElement.clientWidth;  // set canvas logical size equal to its physical size
+      canvasElement.height  = canvasElement.clientHeight; // (ditto)
+      upcomintCanvasElement.width  = upcomintCanvasElement.clientWidth;
+      upcomintCanvasElement.height = upcomintCanvasElement.clientHeight;
+      dx = canvasElement.width  / tetrisCourtWidth; // pixel size of a single tetris block
+      dy = canvasElement.height / tetrisCourtHeight; // (ditto)
       invalidate();
       invalidateNext();
     }
@@ -379,10 +379,10 @@
     function removeLines()
 	{
       var x, y, complete, n = 0;
-      for(y = ny ; y > 0 ; --y)
+      for(y = tetrisCourtHeight ; y > 0 ; --y)
 	  {
         complete = true;
-        for(x = 0 ; x < nx ; ++x)
+        for(x = 0 ; x < tetrisCourtWidth ; ++x)
 		{
           if (!getBlock(x, y))
 		  {
@@ -408,7 +408,7 @@
       var x, y;
       for(y = n ; y >= 0 ; --y)
 	  {
-        for(x = 0 ; x < nx ; ++x)
+        for(x = 0 ; x < tetrisCourtWidth ; ++x)
 		{
 			setBlock(x, y, (y == 0) ? null : getBlock(x, y-1));
 		}
@@ -429,38 +429,38 @@
 
     function draw()
 	{
-      ctx.save();
-      ctx.lineWidth = 1;
-      ctx.translate(0.5, 0.5); // for crisp 1px black lines
+      canvasContext.save();
+      canvasContext.lineWidth = 1;
+      canvasContext.translate(0.5, 0.5); // for crisp 1px black lines
       drawCourt();
       drawNext();
       drawScore();
       drawRows();
-      ctx.restore();
+      canvasContext.restore();
     }
 
     function drawCourt()
 	{
       if (invalid.court)
 	  {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        canvasContext.clearRect(0, 0, canvasElement.width, canvasElement.height);
         if (playing)
 		{
-			drawPiece(ctx, current.type, current.x, current.y, current.dir);
+			drawPiece(canvasContext, current.type, current.x, current.y, current.dir);
 		}
         var x, y, block;
-        for(y = 0 ; y < ny ; y++)
+        for(y = 0 ; y < tetrisCourtHeight ; y++)
 		{
-          for (x = 0 ; x < nx ; x++)
+          for (x = 0 ; x < tetrisCourtWidth ; x++)
 		  {
             if (block = getBlock(x,y))
 			{
-				drawBlock(ctx, x, y, block.color);
+				drawBlock(canvasContext, x, y, block.color);
 			}
               
           }
         }
-        ctx.strokeRect(0, 0, nx*dx - 1, ny*dy - 1); // court boundary
+        canvasContext.strokeRect(0, 0, tetrisCourtWidth*dx - 1, tetrisCourtHeight*dy - 1); // court boundary
         invalid.court = false;
       }
     }
@@ -470,13 +470,13 @@
       if (invalid.next)
 	  {
         var padding = (nu - next.type.size) / 2; // half-arsed attempt at centering next piece display
-        uctx.save();
-        uctx.translate(0.5, 0.5);
-        uctx.clearRect(0, 0, nu*dx, nu*dy);
-        drawPiece(uctx, next.type, padding, padding, next.dir);
-        uctx.strokeStyle = 'black';
-        uctx.strokeRect(0, 0, nu*dx - 1, nu*dy - 1);
-        uctx.restore();
+        upcomingCanvasContext.save();
+        upcomingCanvasContext.translate(0.5, 0.5);
+        upcomingCanvasContext.clearRect(0, 0, nu*dx, nu*dy);
+        drawPiece(upcomingCanvasContext, next.type, padding, padding, next.dir);
+        upcomingCanvasContext.strokeStyle = 'black';
+        upcomingCanvasContext.strokeRect(0, 0, nu*dx - 1, nu*dy - 1);
+        upcomingCanvasContext.restore();
         invalid.next = false;
       }
     }
@@ -499,19 +499,19 @@
       }
     }
 
-    function drawPiece(ctx, type, x, y, dir)
+    function drawPiece(canvasContext, type, x, y, dir)
 	{
       eachblock(type, x, y, dir, function(x, y)
 	  {
-        drawBlock(ctx, x, y, type.color);
+        drawBlock(canvasContext, x, y, type.color);
       });
     }
 
-    function drawBlock(ctx, x, y, color)
+    function drawBlock(canvasContext, x, y, color)
 	{
-      ctx.fillStyle = color;
-      ctx.fillRect(x*dx, y*dy, dx, dy);
-      ctx.strokeRect(x*dx, y*dy, dx, dy)
+      canvasContext.fillStyle = color;
+      canvasContext.fillRect(x*dx, y*dy, dx, dy);
+      canvasContext.strokeRect(x*dx, y*dy, dx, dy)
     }
 
     run();
